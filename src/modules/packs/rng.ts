@@ -14,14 +14,18 @@ export function pickRarity(
   const totalWeight = dropRates.reduce((sum, entry) => sum + entry.weight, 0);
   let roll = randomFn() * totalWeight;
 
-  for (const entry of dropRates) {
+  // Check every band except the last. Whatever `roll` remains after that
+  // belongs to the last entry by construction -- this is the guaranteed
+  // return path for the final band, not a rare edge case: it also absorbs
+  // any floating-point rounding drift from the subtractions above, so
+  // there is no separate "fallback" branch left untested.
+  for (let i = 0; i < dropRates.length - 1; i++) {
+    const entry = dropRates[i];
     if (roll < entry.weight) {
       return entry.rarity;
     }
     roll -= entry.weight;
   }
 
-  // Floating point rounding can leave `roll` fractionally over the last
-  // band's upper edge — fall back to the last entry rather than throw.
   return dropRates[dropRates.length - 1].rarity;
 }

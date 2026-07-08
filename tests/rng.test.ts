@@ -19,12 +19,25 @@ describe('pickRarity', () => {
   });
 
   it('picks the last rarity when the roll lands in the final band', () => {
-    // roll 0.999 * 100 = 99.9 -> falls in SPECIAL band [99.5, 100)
+    // roll 0.999 * 100 = 99.9 -> falls in SPECIAL band [99.5, 100). The loop
+    // only checks bands 1..n-1 (BRONZE, SILVER, GOLD); the last band
+    // (SPECIAL) is always returned unconditionally after that, so this
+    // exercises that guaranteed final-entry return path.
     expect(pickRarity(bronzePackRates, () => 0.999)).toBe('SPECIAL');
   });
 
-  it('falls back to the last entry on a roll of exactly the total weight (floating point edge case)', () => {
-    expect(pickRarity(bronzePackRates, () => 0.9999999999)).toBe('SPECIAL');
+  it('returns the last entry even with a roll close to 1 against weights that have floating-point summation drift', () => {
+    // 0.1 + 0.2 + 0.7 !== 1 exactly in IEEE754 (sums to
+    // 1.0000000000000002). Because the last band is an unconditional
+    // fallthrough rather than a `roll < weight` check, any accumulated
+    // drift from the loop's subtractions cannot cause a missed match or
+    // an out-of-range roll here -- the last entry is always returned.
+    const driftRates: DropRateEntry[] = [
+      { rarity: 'A', weight: 0.1 },
+      { rarity: 'B', weight: 0.2 },
+      { rarity: 'C', weight: 0.7 },
+    ];
+    expect(pickRarity(driftRates, () => 0.9999999999999999)).toBe('C');
   });
 
   it('throws if dropRates is empty', () => {
