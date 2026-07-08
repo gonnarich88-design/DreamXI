@@ -14,9 +14,11 @@ export async function getOrCreateBalance(
   userId: string,
   client: Client = prisma,
 ): Promise<CurrencyBalance> {
-  const existing = await client.currencyBalance.findUnique({ where: { userId } });
-  if (existing) return existing;
-  return client.currencyBalance.create({ data: { userId } });
+  return client.currencyBalance.upsert({
+    where: { userId },
+    create: { userId },
+    update: {},
+  });
 }
 
 async function recordTransaction(
