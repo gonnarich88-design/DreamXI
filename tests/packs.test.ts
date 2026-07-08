@@ -1,7 +1,10 @@
+import request from 'supertest';
 import { prisma } from '../src/db/client';
 import { resetDb } from './helpers/resetDb';
 import { creditLP, creditPendingPP, confirmPP, getOrCreateBalance } from '../src/modules/currency/currency.service';
 import { openPack, PackTypeNotFoundError, NoPlayersForRarityError } from '../src/modules/packs/packs.service';
+import { createApp } from '../src/app';
+import { registerUser, loginUser } from '../src/modules/auth/auth.service';
 
 describe('packs.service openPack', () => {
   let userId: string;
@@ -145,5 +148,68 @@ describe('packs.service openPack', () => {
 
     const pityCounter = await prisma.pityCounter.findFirst({ where: { userId } });
     expect(pityCounter).toBeNull();
+  });
+});
+
+describe('POST /packs/:packTypeName/open', () => {
+  const app = createApp();
+  let token: string;
+  let userId: string;
+
+  beforeEach(async () => {
+    await resetDb();
+
+    const user = await registerUser('httpopen@example.com', 'hunter2pass');
+    userId = user.id;
+    const login = await loginUser('httpopen@example.com', 'hunter2pass');
+    token = login.token;
+
+    await prisma.player.create({
+      data: { name: 'HTTP Bronze Player', team: 'Test FC', position: 'MID', rarity: 'BRONZE' },
+    });
+    await prisma.packType.create({
+      data: {
+        name: 'BRONZE',
+        priceLP: 10,
+        pricePP: null,
+        pityThreshold: null,
+        pityGuaranteedRarity: null,
+        dropRates: { create: [{ rarity: 'BRONZE', weight: 100 }] },
+      },
+    });
+  });
+
+  it('rejects requests with no auth header', async () => {
+    const res = await request(app).post('/packs/BRONZE/open');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 402 when the user cannot afford the pack', async () => {
+    const res = await request(app)
+      .post('/packs/BRONZE/open')
+      .set('Authorization', `Bearer ${token}`);
+    expect(res.status).toBe(402);
+  });
+
+  it('opens a pack and returns the awarded player', async () => {
+    await creditLP(userId, 10, 'daily_login');
+
+    const res = await request(app)
+      .post('/packs/BRONZE/open')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.player.rarity).toBe('BRONZE');
+    expect(res.body.pityTriggered).toBe(false);
+  });
+
+  it('returns 404 for an unknown pack type', async () => {
+    await creditLP(userId, 10, 'daily_login');
+
+    const res = await request(app)
+      .post('/packs/NOT_A_PACK/open')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(404);
   });
 });
