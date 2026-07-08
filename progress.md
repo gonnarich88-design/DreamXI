@@ -6,7 +6,12 @@
 
 กำลังทำ **Plan 1** ด้วย Subagent-Driven Development บน branch `feature/backend-foundation` (แยกจาก `main` แล้ว — ยังไม่ merge)
 
-**สถานะตอนหยุด:** Task 8 (Pack Opening HTTP Endpoint) ผ่านรีวิวแล้ว — **Approved** ไม่ต้องแก้อะไร (dispatch implementer ให้ใช้ `asyncHandler` wrapper ที่มีอยู่แล้วแทนโค้ดตัวอย่างจาก brief ที่มี Express 4 unhandled-rejection bug ซ้ำกับที่เคยเจอใน Task 3 — reviewer ยืนยันว่า apply ถูกต้อง) full suite 37/37 ผ่าน ไม่กระทบ auth routes เดิม commit range `01adb7f..ec93731` บันทึกลง ledger แล้ว ต่อไป: เริ่ม Task 9 (Server Entrypoint) — **งานสุดท้ายของ Plan 1** ด้วย `scripts/task-brief` ตาม workflow เดิม หลังจากนี้ต้อง dispatch final whole-branch code reviewer (ดู superpowers:requesting-code-review) แล้วเข้า superpowers:finishing-a-development-branch
+**สถานะตอนหยุด:** 🎉 **Plan 1 ครบทั้ง 9 Task แล้ว** Task 9 (Server Entrypoint) ผ่านรีวิวรอบสุดท้าย — **Approved** หลังเจอปัญหาระหว่างทาง (โค้ดตาม brief เป๊ะๆ รันไม่ผ่านจริงเพราะ `ts-node-dev` ไม่เห็น ambient type augmentation ของ `req.userId` — ต้องเพิ่ม triple-slash reference ใน `server.ts` ถึงจะรันได้ ลองย้ายไปแก้ที่ `tsconfig.json` แล้วแต่ไม่เวิร์กจริงกับ `ts-node-dev` เวอร์ชันนี้ สุดท้ายผู้ใช้ตัดสินใจคงวิธีเดิมไว้พร้อม comment อธิบาย) commit range `6767188..4d4f63e` บันทึกลง ledger แล้ว
+
+**ขั้นตอนต่อไป (ตาม superpowers:subagent-driven-development):**
+1. Dispatch final whole-branch code reviewer (ใช้ template จาก `superpowers:requesting-code-review`) ตรวจทั้ง branch `feature/backend-foundation` เทียบกับ `main` (หา merge-base ด้วย `git merge-base main HEAD`) — รวม Minor findings ที่สะสมไว้ระหว่างทางทุก task (ดูรายละเอียดใน `.superpowers/sdd/progress.md`) ให้ reviewer ช่วย triage ด้วยว่าอันไหนควรแก้ก่อน merge
+2. ถ้าเจอ findings → แก้แล้ว re-review
+3. เมื่อผ่านแล้ว → เข้า superpowers:finishing-a-development-branch เพื่อตัดสินใจ merge/PR/cleanup
 
 **Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
 
@@ -50,7 +55,7 @@ Stack: Node.js + TypeScript + Express + PostgreSQL + Prisma
 - [x] Task 6: Card Catalog + Pack Type Seed Data
 - [x] Task 7: Pack Opening Orchestration Service
 - [x] Task 8: Pack Opening HTTP Endpoint
-- [ ] Task 9: Server Entrypoint
+- [x] Task 9: Server Entrypoint
 
 ---
 
