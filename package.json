@@ -32,12 +32,12 @@
   "dependencies": {
     "@prisma/client": "^6.19.3",
     "bcrypt": "^6.0.0",
-    "express": "^5.2.1",
+    "express": "^4.22.2",
     "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
-    "@types/express": "^5.0.6",
+    "@types/express": "^4.17.25",
     "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.1",
