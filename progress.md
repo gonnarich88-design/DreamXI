@@ -6,7 +6,7 @@
 
 กำลังทำ **Plan 1** ด้วย Subagent-Driven Development บน branch `feature/backend-foundation` (แยกจาก `main` แล้ว — ยังไม่ merge)
 
-**สถานะตอนหยุด:** Task 7 (Pack Opening Orchestration Service) ผ่านรีวิวแล้ว — **Approved** หลังแก้ 1 รอบ (2 findings Important ทั้งคู่ยืนยันแล้วโดยผู้ใช้): (1) เพิ่ม guard ป้องกัน free-pack เมื่อ PackType ไม่มีทั้ง priceLP/pricePP (plan-mandated), (2) เพิ่ม permanent regression test พิสูจน์ว่า transaction rollback การหักเงินจริงเมื่อเกิด error หลังจากนั้น — จุดที่เสี่ยงสูงสุดของทั้งแผน (หักเงิน+มอบการ์ดใน transaction เดียว) ผ่านการตรวจสอบ 2 รอบอย่างละเอียดแล้ว ไม่มี Critical/Important เหลือ commit range `1ab7d05..41f9200` บันทึกลง ledger แล้ว ต่อไป: เริ่ม Task 8 (Pack Opening HTTP Endpoint) ด้วย `scripts/task-brief` ตาม workflow เดิม
+**สถานะตอนหยุด:** Task 8 (Pack Opening HTTP Endpoint) ผ่านรีวิวแล้ว — **Approved** ไม่ต้องแก้อะไร (dispatch implementer ให้ใช้ `asyncHandler` wrapper ที่มีอยู่แล้วแทนโค้ดตัวอย่างจาก brief ที่มี Express 4 unhandled-rejection bug ซ้ำกับที่เคยเจอใน Task 3 — reviewer ยืนยันว่า apply ถูกต้อง) full suite 37/37 ผ่าน ไม่กระทบ auth routes เดิม commit range `01adb7f..ec93731` บันทึกลง ledger แล้ว ต่อไป: เริ่ม Task 9 (Server Entrypoint) — **งานสุดท้ายของ Plan 1** ด้วย `scripts/task-brief` ตาม workflow เดิม หลังจากนี้ต้อง dispatch final whole-branch code reviewer (ดู superpowers:requesting-code-review) แล้วเข้า superpowers:finishing-a-development-branch
 
 **Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
 
@@ -49,7 +49,7 @@ Stack: Node.js + TypeScript + Express + PostgreSQL + Prisma
 - [x] Task 5: Pity Counter Service
 - [x] Task 6: Card Catalog + Pack Type Seed Data
 - [x] Task 7: Pack Opening Orchestration Service
-- [ ] Task 8: Pack Opening HTTP Endpoint
+- [x] Task 8: Pack Opening HTTP Endpoint
 - [ ] Task 9: Server Entrypoint
 
 ---
