@@ -8,10 +8,9 @@
 
 **สถานะตอนหยุด:** 🎉 **Plan 1 ครบทั้ง 9 Task แล้ว** Task 9 (Server Entrypoint) ผ่านรีวิวรอบสุดท้าย — **Approved** หลังเจอปัญหาระหว่างทาง (โค้ดตาม brief เป๊ะๆ รันไม่ผ่านจริงเพราะ `ts-node-dev` ไม่เห็น ambient type augmentation ของ `req.userId` — ต้องเพิ่ม triple-slash reference ใน `server.ts` ถึงจะรันได้ ลองย้ายไปแก้ที่ `tsconfig.json` แล้วแต่ไม่เวิร์กจริงกับ `ts-node-dev` เวอร์ชันนี้ สุดท้ายผู้ใช้ตัดสินใจคงวิธีเดิมไว้พร้อม comment อธิบาย) commit range `6767188..4d4f63e` บันทึกลง ledger แล้ว
 
-**ขั้นตอนต่อไป (ตาม superpowers:subagent-driven-development):**
-1. Dispatch final whole-branch code reviewer (ใช้ template จาก `superpowers:requesting-code-review`) ตรวจทั้ง branch `feature/backend-foundation` เทียบกับ `main` (หา merge-base ด้วย `git merge-base main HEAD`) — รวม Minor findings ที่สะสมไว้ระหว่างทางทุก task (ดูรายละเอียดใน `.superpowers/sdd/progress.md`) ให้ reviewer ช่วย triage ด้วยว่าอันไหนควรแก้ก่อน merge
-2. ถ้าเจอ findings → แก้แล้ว re-review
-3. เมื่อผ่านแล้ว → เข้า superpowers:finishing-a-development-branch เพื่อตัดสินใจ merge/PR/cleanup
+**Final whole-branch review เสร็จแล้ว:** Ready to merge: Yes — ทุก global constraint หลักผ่านหมด (ตรวจซ้ำอิสระโดย reviewer) พบ 1 finding Important: `getOrCreateBalance` มี race เดียวกับที่เคยแก้ใน pity counter (Task 5) → แก้เป็น `upsert` แล้ว (commit `99a3440`) full suite 37/37 + tsc clean Minor findings ที่เหลือทั้งหมดถูก triage เป็น follow-up work ไม่ใช่ merge blocker (รายละเอียดใน `.superpowers/sdd/progress.md`)
+
+**ขั้นตอนต่อไป:** เข้า superpowers:finishing-a-development-branch เพื่อตัดสินใจ merge/PR/cleanup สำหรับ branch `feature/backend-foundation`
 
 **Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
 
