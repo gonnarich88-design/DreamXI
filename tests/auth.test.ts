@@ -61,4 +61,21 @@ describe('auth routes', () => {
 
     expect(res.status).toBe(401);
   });
+
+  it('returns 500 instead of hanging when an unexpected error occurs during registration', async () => {
+    // Without asyncHandler wrapping the route, Express 4 does not forward a
+    // rejected promise from an async handler to the error middleware -- the
+    // request would hang with no response instead of reaching this assertion.
+    const createSpy = jest
+      .spyOn(prisma.user, 'create')
+      .mockRejectedValueOnce(new Error('simulated db failure'));
+
+    const res = await request(app)
+      .post('/auth/register')
+      .send({ email: 'unexpected-error@example.com', password: 'hunter2pass' });
+
+    expect(res.status).toBe(500);
+
+    createSpy.mockRestore();
+  });
 });
