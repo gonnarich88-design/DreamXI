@@ -1,7 +1,10 @@
-# Design Doc: ระบบเปิดการ์ดนักเตะ (Football Player Card Pack-Opening System)
+# Design Doc: Dream XI — ระบบเปิดการ์ดนักเตะ (Football Player Card Pack-Opening System)
 
+**ชื่อโปรเจกต์/เกม:** Dream XI
 **วันที่:** 2026-07-08
-**สถานะ:** Draft — ผ่านการ brainstorm และแก้ไขจุดอ่อนร่วมกับผู้ใช้แล้ว รอ review ก่อนเข้าสู่ implementation planning
+**สถานะ:** Approved — ผ่านการ brainstorm และแก้ไขจุดอ่อนร่วมกับผู้ใช้แล้ว พร้อมเข้าสู่ implementation planning
+
+> ⚠️ ก่อนใช้ชื่อ "Dream XI" เป็นทางการ แนะนำให้ตรวจสอบว่าไม่ชนกับเครื่องหมายการค้า/ชื่อเกมที่มีอยู่แล้วในตลาด (เช่น App Store, Play Store, กรมทรัพย์สินทางปัญญา) ก่อนจดทะเบียนแบรนด์จริง
 
 ---
 
