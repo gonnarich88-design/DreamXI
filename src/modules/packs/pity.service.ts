@@ -8,12 +8,11 @@ export async function getOrCreatePityCounter(
   packTypeId: string,
   client: Client = prisma,
 ): Promise<PityCounter> {
-  const existing = await client.pityCounter.findUnique({
+  return client.pityCounter.upsert({
     where: { userId_packTypeId: { userId, packTypeId } },
+    create: { userId, packTypeId, count: 0 },
+    update: {},
   });
-  if (existing) return existing;
-
-  return client.pityCounter.create({ data: { userId, packTypeId, count: 0 } });
 }
 
 export async function resolvePityForOpen(
