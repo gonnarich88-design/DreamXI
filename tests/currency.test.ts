@@ -90,4 +90,23 @@ describe('currency.service', () => {
       InsufficientFundsError,
     );
   });
+
+  it('never drives LP negative under concurrent debits for the same user', async () => {
+    // Balance can afford exactly ONE of these two concurrent debits, never both.
+    await creditLP(userId, 10, 'daily_login');
+
+    const results = await Promise.allSettled([
+      debitLP(userId, 8, 'open_pack_a'),
+      debitLP(userId, 8, 'open_pack_b'),
+    ]);
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled');
+    const failed = results.filter((r) => r.status === 'rejected');
+    expect(succeeded).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+    expect((failed[0] as PromiseRejectedResult).reason).toBeInstanceOf(InsufficientFundsError);
+
+    const balance = await getOrCreateBalance(userId);
+    expect(balance.lp).toBe(2); // 10 - 8, never negative
+  });
 });

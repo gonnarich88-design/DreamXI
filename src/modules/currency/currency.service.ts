@@ -31,6 +31,29 @@ async function recordTransaction(
   });
 }
 
+/**
+ * Atomically decrements `field` by `amount` only if the row's current value
+ * is >= amount, in one SQL statement (`UPDATE ... WHERE userId = ? AND
+ * field >= amount`). This closes the check-then-act race that a separate
+ * `findUnique` + `update` has under concurrent debits: two simultaneous
+ * calls both reading a stale balance can both pass a plain `if (current <
+ * amount)` guard and both apply their decrement, driving the balance
+ * negative. `updateMany`'s `count` tells us whether the condition held at
+ * the moment of the write, not at the moment of an earlier read.
+ */
+async function decrementIfSufficient(
+  client: Client,
+  userId: string,
+  field: 'lp' | 'ppConfirmed' | 'dust',
+  amount: number,
+): Promise<boolean> {
+  const result = await client.currencyBalance.updateMany({
+    where: { userId, [field]: { gte: amount } },
+    data: { [field]: { decrement: amount } },
+  });
+  return result.count > 0;
+}
+
 export async function creditLP(
   userId: string,
   amount: number,
@@ -52,16 +75,14 @@ export async function debitLP(
   reason: string,
   client: Client = prisma,
 ): Promise<CurrencyBalance> {
-  const current = await getOrCreateBalance(userId, client);
-  if (current.lp < amount) {
+  await getOrCreateBalance(userId, client);
+  const succeeded = await decrementIfSufficient(client, userId, 'lp', amount);
+  if (!succeeded) {
+    const current = await getOrCreateBalance(userId, client);
     throw new InsufficientFundsError('LP', amount, current.lp);
   }
-  const balance = await client.currencyBalance.update({
-    where: { userId },
-    data: { lp: { decrement: amount } },
-  });
   await recordTransaction(client, userId, 'LP', -amount, reason);
-  return balance;
+  return getOrCreateBalance(userId, client);
 }
 
 export async function creditPendingPP(
@@ -85,16 +106,17 @@ export async function confirmPP(
   reason: string,
   client: Client = prisma,
 ): Promise<CurrencyBalance> {
-  const current = await getOrCreateBalance(userId, client);
-  if (current.ppPending < amount) {
-    throw new InsufficientFundsError('PP_PENDING', amount, current.ppPending);
-  }
-  const balance = await client.currencyBalance.update({
-    where: { userId },
+  await getOrCreateBalance(userId, client);
+  const result = await client.currencyBalance.updateMany({
+    where: { userId, ppPending: { gte: amount } },
     data: { ppPending: { decrement: amount }, ppConfirmed: { increment: amount } },
   });
+  if (result.count === 0) {
+    const current = await getOrCreateBalance(userId, client);
+    throw new InsufficientFundsError('PP_PENDING', amount, current.ppPending);
+  }
   await recordTransaction(client, userId, 'PP_CONFIRMED', amount, reason);
-  return balance;
+  return getOrCreateBalance(userId, client);
 }
 
 export async function debitConfirmedPP(
@@ -103,16 +125,14 @@ export async function debitConfirmedPP(
   reason: string,
   client: Client = prisma,
 ): Promise<CurrencyBalance> {
-  const current = await getOrCreateBalance(userId, client);
-  if (current.ppConfirmed < amount) {
+  await getOrCreateBalance(userId, client);
+  const succeeded = await decrementIfSufficient(client, userId, 'ppConfirmed', amount);
+  if (!succeeded) {
+    const current = await getOrCreateBalance(userId, client);
     throw new InsufficientFundsError('PP_CONFIRMED', amount, current.ppConfirmed);
   }
-  const balance = await client.currencyBalance.update({
-    where: { userId },
-    data: { ppConfirmed: { decrement: amount } },
-  });
   await recordTransaction(client, userId, 'PP_CONFIRMED', -amount, reason);
-  return balance;
+  return getOrCreateBalance(userId, client);
 }
 
 export async function creditXP(
@@ -151,14 +171,12 @@ export async function debitDust(
   reason: string,
   client: Client = prisma,
 ): Promise<CurrencyBalance> {
-  const current = await getOrCreateBalance(userId, client);
-  if (current.dust < amount) {
+  await getOrCreateBalance(userId, client);
+  const succeeded = await decrementIfSufficient(client, userId, 'dust', amount);
+  if (!succeeded) {
+    const current = await getOrCreateBalance(userId, client);
     throw new InsufficientFundsError('DUST', amount, current.dust);
   }
-  const balance = await client.currencyBalance.update({
-    where: { userId },
-    data: { dust: { decrement: amount } },
-  });
   await recordTransaction(client, userId, 'DUST', -amount, reason);
-  return balance;
+  return getOrCreateBalance(userId, client);
 }
