@@ -6,8 +6,8 @@
 
 กำลังทำ **Plan 1** ด้วย Subagent-Driven Development บน branch `feature/backend-foundation` (แยกจาก `main` แล้ว — ยังไม่ merge)
 
-**สถานะตอนหยุด:** Task 4 (RNG) โค้ดแก้ไขล่าสุด commit `c756dd5` แล้ว รันเทสเองผ่านครบ 22/22 (`npm test`) แต่ **reviewer subagent รอบยืนยันสุดท้ายยังไม่ตอบกลับ** (dispatch ไปแล้วตอนหยุด ยังไม่ได้เช็คผล) — เมื่อกลับมาทำต่อ:
-1. เช็คว่า reviewer ตอบกลับหรือยัง (ถ้า session เดิมหลุดไปแล้ว ให้ dispatch reviewer ใหม่โดยใช้ diff `6055262..c756dd5` — ดูวิธี generate ที่ `docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md` หรือ skill `superpowers:subagent-driven-development`)
+**สถานะตอนหยุด:** Task 4 (RNG) โค้ดแก้ไขล่าสุด commit `c756dd5` แล้ว รันเทสเองผ่านครบ 22/22 (`npm test`) — **reviewer subagent รอบยืนยันสุดท้าย stall ไปแล้ว (status: failed, no progress 600s)** ยังไม่มีผล verdict ยืนยัน เมื่อกลับมาทำต่อ:
+1. Dispatch reviewer ใหม่อีกครั้งสำหรับ diff `6055262..c756dd5` (ยังไม่เคย approve จริง ต้อง review ใหม่ ไม่ใช่แค่เช็คผลเดิม) — ดูวิธี generate diff/prompt ที่ `docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md` หรือ skill `superpowers:subagent-driven-development`
 2. ถ้า Approved → mark Task 4 เสร็จในทั้งสองที่ (checkbox ด้านล่าง + `.superpowers/sdd/progress.md` ledger) แล้วไป Task 5 ต่อ
 3. ถ้ามี issue → แก้แล้ว re-review ตามรอบเดิม
 
