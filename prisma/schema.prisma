@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  currencyBalance CurrencyBalance?
+  currencyTxns    CurrencyTransaction[]
+  userCards       UserCard[]
+  pityCounters    PityCounter[]
+}
+
+model CurrencyBalance {
+  id          String @id @default(uuid())
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id])
+  lp          Int    @default(0)
+  ppPending   Int    @default(0)
+  ppConfirmed Int    @default(0)
+  xp          Int    @default(0)
+  dust        Int    @default(0)
+}
+
+model CurrencyTransaction {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  currency  String
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+}
+
+model Player {
+  id        String     @id @default(uuid())
+  name      String
+  team      String
+  position  String
+  rarity    String
+  userCards UserCard[]
+}
+
+model UserCard {
+  id       String @id @default(uuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+  playerId String
+  player   Player @relation(fields: [playerId], references: [id])
+  quantity Int    @default(1)
+
+  @@unique([userId, playerId])
+}
+
+model PackType {
+  id                   String @id @default(uuid())
+  name                 String @unique
+  priceLP              Int?
+  pricePP              Int?
+  pityThreshold        Int?
+  pityGuaranteedRarity String?
+
+  dropRates    PackDropRate[]
+  pityCounters PityCounter[]
+}
+
+model PackDropRate {
+  id         String   @id @default(uuid())
+  packTypeId String
+  packType   PackType @relation(fields: [packTypeId], references: [id])
+  rarity     String
+  weight     Float
+}
+
+model PityCounter {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id])
+  packTypeId String
+  packType   PackType @relation(fields: [packTypeId], references: [id])
+  count      Int      @default(0)
+
+  @@unique([userId, packTypeId])
+}
