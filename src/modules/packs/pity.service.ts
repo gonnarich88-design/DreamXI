@@ -24,8 +24,11 @@ export async function resolvePityForOpen(
     return { forcedRarity: null, nextCount: 0, willTrigger: false };
   }
 
-  const counter = await getOrCreatePityCounter(userId, packType.id, client);
-  const nextCount = counter.count + 1;
+  const existing = await client.pityCounter.findUnique({
+    where: { userId_packTypeId: { userId, packTypeId: packType.id } },
+  });
+  const currentCount = existing?.count ?? 0;
+  const nextCount = currentCount + 1;
   const willTrigger = nextCount >= packType.pityThreshold;
 
   return {
