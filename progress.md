@@ -1,6 +1,17 @@
 # Dream XI — Progress Tracker
 
-**อัปเดตล่าสุด:** 2026-07-08
+**อัปเดตล่าสุด:** 2026-07-09
+
+## ▶️ Resume Here (สำหรับ chat หน้า)
+
+กำลังทำ **Plan 1** ด้วย Subagent-Driven Development บน branch `feature/backend-foundation` (แยกจาก `main` แล้ว — ยังไม่ merge)
+
+**สถานะตอนหยุด:** Task 4 (RNG) โค้ดแก้ไขล่าสุด commit `c756dd5` แล้ว รันเทสเองผ่านครบ 22/22 (`npm test`) แต่ **reviewer subagent รอบยืนยันสุดท้ายยังไม่ตอบกลับ** (dispatch ไปแล้วตอนหยุด ยังไม่ได้เช็คผล) — เมื่อกลับมาทำต่อ:
+1. เช็คว่า reviewer ตอบกลับหรือยัง (ถ้า session เดิมหลุดไปแล้ว ให้ dispatch reviewer ใหม่โดยใช้ diff `6055262..c756dd5` — ดูวิธี generate ที่ `docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md` หรือ skill `superpowers:subagent-driven-development`)
+2. ถ้า Approved → mark Task 4 เสร็จในทั้งสองที่ (checkbox ด้านล่าง + `.superpowers/sdd/progress.md` ledger) แล้วไป Task 5 ต่อ
+3. ถ้ามี issue → แก้แล้ว re-review ตามรอบเดิม
+
+**Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
 
 โปรเจกต์: ระบบเปิดการ์ดนักเตะ Premier League แบบ gacha/pack-opening ผูกกับระบบร้านค้าเดิม (แต้มฟรีทั้งหมด ไม่มีการขายซองด้วยเงินจริงตรงๆ)
 
