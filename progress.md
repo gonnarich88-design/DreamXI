@@ -36,7 +36,7 @@ Stack: Node.js + TypeScript + Express + PostgreSQL + Prisma
 
 - [x] Task 1: Project Scaffolding + Database Schema
 - [x] Task 2: Currency Ledger Service (LP / PP pending-confirmed / XP / Dust)
-- [ ] Task 3: Auth (Register, Login, JWT Middleware)
+- [x] Task 3: Auth (Register, Login, JWT Middleware)
 - [ ] Task 4: RNG Rarity Selection (Pure Function)
 - [ ] Task 5: Pity Counter Service
 - [ ] Task 6: Card Catalog + Pack Type Seed Data
