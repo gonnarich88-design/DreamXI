@@ -10,7 +10,9 @@
 
 **Final whole-branch review เสร็จแล้ว:** Ready to merge: Yes — ทุก global constraint หลักผ่านหมด (ตรวจซ้ำอิสระโดย reviewer) พบ 1 finding Important: `getOrCreateBalance` มี race เดียวกับที่เคยแก้ใน pity counter (Task 5) → แก้เป็น `upsert` แล้ว (commit `99a3440`) full suite 37/37 + tsc clean Minor findings ที่เหลือทั้งหมดถูก triage เป็น follow-up work ไม่ใช่ merge blocker (รายละเอียดใน `.superpowers/sdd/progress.md`)
 
-**ขั้นตอนต่อไป:** เข้า superpowers:finishing-a-development-branch เพื่อตัดสินใจ merge/PR/cleanup สำหรับ branch `feature/backend-foundation`
+**เสร็จแล้ว:** Push branch ขึ้น origin แล้วสร้าง PR — **https://github.com/gonnarich88-design/DreamXI/pull/1**
+
+**ขั้นตอนต่อไป (สำหรับ chat หน้า):** รอ merge PR #1 (หรือแก้ตาม feedback ถ้ามี) หลัง merge แล้วเริ่ม Plan 2 (Duplicate Handling: Disenchant/Dust, Fusion, Dust Shop) — ยังไม่มี plan doc สำหรับ Plan 2 ต้องเริ่มจาก brainstorming/spec ก่อน
 
 **Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
 
@@ -33,7 +35,7 @@
 
 | # | แผน | สถานะ |
 |---|---|---|
-| 1 | Backend Foundation + Pack Opening Engine | 🟡 In Progress |
+| 1 | Backend Foundation + Pack Opening Engine | 🟡 PR open ([#1](https://github.com/gonnarich88-design/DreamXI/pull/1)) — pending merge |
 | 2 | Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) | ⚪ Not started |
 | 3 | Purchase Points Lifecycle (Webhook, Pending→Confirmed, Clawback) | ⚪ Not started |
 | 4 | Level / XP System | ⚪ Not started |
