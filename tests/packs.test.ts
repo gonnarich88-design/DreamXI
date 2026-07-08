@@ -1,7 +1,7 @@
 import { prisma } from '../src/db/client';
 import { resetDb } from './helpers/resetDb';
 import { creditLP, creditPendingPP, confirmPP, getOrCreateBalance } from '../src/modules/currency/currency.service';
-import { openPack, PackTypeNotFoundError } from '../src/modules/packs/packs.service';
+import { openPack, PackTypeNotFoundError, NoPlayersForRarityError } from '../src/modules/packs/packs.service';
 
 describe('packs.service openPack', () => {
   let userId: string;
@@ -106,5 +106,44 @@ describe('packs.service openPack', () => {
 
     expect(secondResult.pityTriggered).toBe(true);
     expect(secondResult.player.rarity).toBe('SILVER');
+  });
+
+  it('rolls back a committed-looking debit when a later step throws NoPlayersForRarityError', async () => {
+    // Drop table resolves to PLATINUM, but no PLATINUM player exists in this
+    // test's fixtures -- this forces the error to occur *after* debitLP has
+    // already written its decrement + ledger row inside the transaction,
+    // so a passing assertion here proves the write was reverted, not that
+    // it simply never happened.
+    await prisma.packType.create({
+      data: {
+        name: 'EMPTY_RARITY_PACK',
+        priceLP: 10,
+        pricePP: null,
+        pityThreshold: null,
+        pityGuaranteedRarity: null,
+        dropRates: {
+          create: [{ rarity: 'PLATINUM', weight: 100 }],
+        },
+      },
+    });
+
+    await creditLP(userId, 10, 'daily_login');
+    const balanceBefore = await getOrCreateBalance(userId);
+    expect(balanceBefore.lp).toBe(10);
+    const txCountBefore = await prisma.currencyTransaction.count({ where: { userId } });
+
+    await expect(openPack(userId, 'EMPTY_RARITY_PACK')).rejects.toThrow(NoPlayersForRarityError);
+
+    const balanceAfter = await getOrCreateBalance(userId);
+    expect(balanceAfter.lp).toBe(10);
+
+    const txCountAfter = await prisma.currencyTransaction.count({ where: { userId } });
+    expect(txCountAfter).toBe(txCountBefore);
+
+    const userCard = await prisma.userCard.findFirst({ where: { userId } });
+    expect(userCard).toBeNull();
+
+    const pityCounter = await prisma.pityCounter.findFirst({ where: { userId } });
+    expect(pityCounter).toBeNull();
   });
 });

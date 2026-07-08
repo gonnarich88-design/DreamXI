@@ -33,6 +33,10 @@ export async function openPack(
       await debitLP(userId, packType.priceLP, `open_pack_${packType.name}`, tx);
     } else if (packType.pricePP !== null) {
       await debitConfirmedPP(userId, packType.pricePP, `open_pack_${packType.name}`, tx);
+    } else {
+      throw new Error(
+        `PackType ${packType.name} has no price configured (priceLP and pricePP both null)`,
+      );
     }
 
     const pity = await resolvePityForOpen(
