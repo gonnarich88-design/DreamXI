@@ -1,6 +1,20 @@
 # Dream XI — Progress Tracker
 
-**อัปเดตล่าสุด:** 2026-07-08
+**อัปเดตล่าสุด:** 2026-07-09
+
+## ▶️ Resume Here (สำหรับ chat หน้า)
+
+กำลังทำ **Plan 1** ด้วย Subagent-Driven Development บน branch `feature/backend-foundation` (แยกจาก `main` แล้ว — ยังไม่ merge)
+
+**สถานะตอนหยุด:** 🎉 **Plan 1 ครบทั้ง 9 Task แล้ว** Task 9 (Server Entrypoint) ผ่านรีวิวรอบสุดท้าย — **Approved** หลังเจอปัญหาระหว่างทาง (โค้ดตาม brief เป๊ะๆ รันไม่ผ่านจริงเพราะ `ts-node-dev` ไม่เห็น ambient type augmentation ของ `req.userId` — ต้องเพิ่ม triple-slash reference ใน `server.ts` ถึงจะรันได้ ลองย้ายไปแก้ที่ `tsconfig.json` แล้วแต่ไม่เวิร์กจริงกับ `ts-node-dev` เวอร์ชันนี้ สุดท้ายผู้ใช้ตัดสินใจคงวิธีเดิมไว้พร้อม comment อธิบาย) commit range `6767188..4d4f63e` บันทึกลง ledger แล้ว
+
+**Final whole-branch review เสร็จแล้ว:** Ready to merge: Yes — ทุก global constraint หลักผ่านหมด (ตรวจซ้ำอิสระโดย reviewer) พบ 1 finding Important: `getOrCreateBalance` มี race เดียวกับที่เคยแก้ใน pity counter (Task 5) → แก้เป็น `upsert` แล้ว (commit `99a3440`) full suite 37/37 + tsc clean Minor findings ที่เหลือทั้งหมดถูก triage เป็น follow-up work ไม่ใช่ merge blocker (รายละเอียดใน `.superpowers/sdd/progress.md`)
+
+**เสร็จแล้ว:** Push branch ขึ้น origin แล้วสร้าง PR — **https://github.com/gonnarich88-design/DreamXI/pull/1**
+
+**ขั้นตอนต่อไป (สำหรับ chat หน้า):** รอ merge PR #1 (หรือแก้ตาม feedback ถ้ามี) หลัง merge แล้วเริ่ม Plan 2 (Duplicate Handling: Disenchant/Dust, Fusion, Dust Shop) — ยังไม่มี plan doc สำหรับ Plan 2 ต้องเริ่มจาก brainstorming/spec ก่อน
+
+**Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
 
 โปรเจกต์: ระบบเปิดการ์ดนักเตะ Premier League แบบ gacha/pack-opening ผูกกับระบบร้านค้าเดิม (แต้มฟรีทั้งหมด ไม่มีการขายซองด้วยเงินจริงตรงๆ)
 
@@ -21,7 +35,7 @@
 
 | # | แผน | สถานะ |
 |---|---|---|
-| 1 | Backend Foundation + Pack Opening Engine | 🟡 In Progress |
+| 1 | Backend Foundation + Pack Opening Engine | 🟡 PR open ([#1](https://github.com/gonnarich88-design/DreamXI/pull/1)) — pending merge |
 | 2 | Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) | ⚪ Not started |
 | 3 | Purchase Points Lifecycle (Webhook, Pending→Confirmed, Clawback) | ⚪ Not started |
 | 4 | Level / XP System | ⚪ Not started |
@@ -34,15 +48,15 @@
 
 Stack: Node.js + TypeScript + Express + PostgreSQL + Prisma
 
-- [ ] Task 1: Project Scaffolding + Database Schema
-- [ ] Task 2: Currency Ledger Service (LP / PP pending-confirmed / XP / Dust)
-- [ ] Task 3: Auth (Register, Login, JWT Middleware)
-- [ ] Task 4: RNG Rarity Selection (Pure Function)
-- [ ] Task 5: Pity Counter Service
-- [ ] Task 6: Card Catalog + Pack Type Seed Data
-- [ ] Task 7: Pack Opening Orchestration Service
-- [ ] Task 8: Pack Opening HTTP Endpoint
-- [ ] Task 9: Server Entrypoint
+- [x] Task 1: Project Scaffolding + Database Schema
+- [x] Task 2: Currency Ledger Service (LP / PP pending-confirmed / XP / Dust)
+- [x] Task 3: Auth (Register, Login, JWT Middleware)
+- [x] Task 4: RNG Rarity Selection (Pure Function)
+- [x] Task 5: Pity Counter Service
+- [x] Task 6: Card Catalog + Pack Type Seed Data
+- [x] Task 7: Pack Opening Orchestration Service
+- [x] Task 8: Pack Opening HTTP Endpoint
+- [x] Task 9: Server Entrypoint
 
 ---
 
