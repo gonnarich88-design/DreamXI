@@ -1,6 +1,7 @@
-import { Player } from '@prisma/client';
+import { Player, Prisma } from '@prisma/client';
 import { prisma } from '../../db/client';
 import { debitDust } from '../currency/currency.service';
+import { NoPlayersForRarityError } from '../../shared/errors';
 
 const SILVER_PRICE = 300;
 const GOLD_PRICE = 2000;
@@ -61,4 +62,66 @@ export async function purchaseSilver(userId: string, playerId: string): Promise<
 
     return { player };
   });
+}
+
+export class MonthlyLimitExceededError extends Error {
+  constructor() {
+    super('Gold token can only be purchased once per calendar month');
+    this.name = 'MonthlyLimitExceededError';
+  }
+}
+
+export async function purchaseGold(userId: string): Promise<{ player: Player }> {
+  return prisma.$transaction(async (tx) => {
+    const goldPlayers = await tx.player.findMany({ where: { rarity: 'GOLD' } });
+    if (goldPlayers.length === 0) {
+      throw new NoPlayersForRarityError('GOLD');
+    }
+    const picked = goldPlayers[Math.floor(Math.random() * goldPlayers.length)];
+
+    await debitDust(userId, GOLD_PRICE, 'dustshop_gold', tx);
+
+    try {
+      await tx.dustShopPurchase.create({
+        data: {
+          userId,
+          itemType: 'GOLD',
+          playerId: picked.id,
+          dustCost: GOLD_PRICE,
+          goldMonthKey: currentMonthKey(),
+        },
+      });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+        throw new MonthlyLimitExceededError();
+      }
+      throw err;
+    }
+
+    await tx.userCard.upsert({
+      where: { userId_playerId: { userId, playerId: picked.id } },
+      create: { userId, playerId: picked.id, quantity: 1 },
+      update: { quantity: { increment: 1 } },
+    });
+
+    return { player: picked };
+  });
+}
+
+export async function purchase(
+  userId: string,
+  itemType: string,
+  playerId?: string,
+): Promise<{ player: Player }> {
+  if (itemType === 'SPECIAL') {
+    throw new ItemNotAvailableError('SPECIAL');
+  }
+  if (itemType === 'SILVER') {
+    if (!playerId) throw new InvalidPlayerForItemError('(missing)', 'SILVER');
+    return purchaseSilver(userId, playerId);
+  }
+  if (itemType === 'GOLD') {
+    return purchaseGold(userId);
+  }
+  throw new ItemNotAvailableError(itemType);
 }

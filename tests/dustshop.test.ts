@@ -1,7 +1,15 @@
 import { prisma } from '../src/db/client';
 import { resetDb } from './helpers/resetDb';
 import { creditDust, getOrCreateBalance, InsufficientFundsError } from '../src/modules/currency/currency.service';
-import { getCatalog, purchaseSilver, InvalidPlayerForItemError } from '../src/modules/dustshop/dustshop.service';
+import {
+  getCatalog,
+  purchaseSilver,
+  purchaseGold,
+  purchase,
+  InvalidPlayerForItemError,
+  MonthlyLimitExceededError,
+  ItemNotAvailableError,
+} from '../src/modules/dustshop/dustshop.service';
 
 describe('dustshop.service getCatalog', () => {
   let userId: string;
@@ -77,5 +85,74 @@ describe('dustshop.service purchaseSilver', () => {
     const poorUser = await prisma.user.create({ data: { email: 'poor@example.com', passwordHash: 'x' } });
 
     await expect(purchaseSilver(poorUser.id, silverPlayerId)).rejects.toThrow(InsufficientFundsError);
+  });
+});
+
+describe('dustshop.service purchaseGold', () => {
+  let userId: string;
+
+  beforeEach(async () => {
+    await resetDb();
+    const user = await prisma.user.create({ data: { email: 'buygold@example.com', passwordHash: 'x' } });
+    userId = user.id;
+    await creditDust(userId, 4000, 'test_seed');
+    await prisma.player.create({
+      data: { name: 'Shop Gold', team: 'Test FC', position: 'FWD', rarity: 'GOLD' },
+    });
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it('debits 2000 dust and grants a random GOLD card', async () => {
+    const result = await purchaseGold(userId);
+    expect(result.player.rarity).toBe('GOLD');
+
+    const balance = await getOrCreateBalance(userId);
+    expect(balance.dust).toBe(2000);
+  });
+
+  it('throws MonthlyLimitExceededError on a second purchase in the same calendar month, refunding the debit', async () => {
+    await purchaseGold(userId);
+    await expect(purchaseGold(userId)).rejects.toThrow(MonthlyLimitExceededError);
+
+    const balance = await getOrCreateBalance(userId);
+    expect(balance.dust).toBe(2000); // second attempt's debit was rolled back
+  });
+
+  it('never allows two Gold purchases from concurrent requests in the same month', async () => {
+    const results = await Promise.allSettled([purchaseGold(userId), purchaseGold(userId)]);
+
+    const succeeded = results.filter((r) => r.status === 'fulfilled');
+    const failed = results.filter((r) => r.status === 'rejected');
+    expect(succeeded).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+    expect((failed[0] as PromiseRejectedResult).reason).toBeInstanceOf(MonthlyLimitExceededError);
+
+    const balance = await getOrCreateBalance(userId);
+    expect(balance.dust).toBe(2000);
+  });
+});
+
+describe('dustshop.service purchase (dispatch)', () => {
+  let userId: string;
+
+  beforeEach(async () => {
+    await resetDb();
+    const user = await prisma.user.create({ data: { email: 'dispatch@example.com', passwordHash: 'x' } });
+    userId = user.id;
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  it('always rejects SPECIAL with ItemNotAvailableError', async () => {
+    await expect(purchase(userId, 'SPECIAL')).rejects.toThrow(ItemNotAvailableError);
+  });
+
+  it('rejects an unknown itemType with ItemNotAvailableError', async () => {
+    await expect(purchase(userId, 'PLATINUM')).rejects.toThrow(ItemNotAvailableError);
   });
 });
