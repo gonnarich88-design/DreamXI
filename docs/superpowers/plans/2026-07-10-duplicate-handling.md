@@ -50,6 +50,7 @@ tests/dustshop.test.ts                  — Create
 
 **Files:**
 - Modify: `prisma/schema.prisma:10-20` (User model), `prisma/schema.prisma:43-50` (Player model), end of file (new model)
+- Modify: `tests/helpers/resetDb.ts`
 
 **Interfaces:**
 - Produces: `DustShopPurchase` Prisma model with fields `id, userId, user, itemType, playerId, player, dustCost, goldMonthKey, createdAt`, unique constraint `@@unique([userId, goldMonthKey])`
@@ -136,15 +137,56 @@ model DustShopPurchase {
 Run: `npx dotenv -e .env -- npx prisma migrate dev --name add_dust_shop_purchase`
 Expected: `Your database is now in sync with your schema.` and a new folder under `prisma/migrations/` containing the generated SQL. This also regenerates the Prisma Client, so `prisma.dustShopPurchase` becomes available in TypeScript.
 
-- [ ] **Step 5: Verify the client compiles**
+- [ ] **Step 5: Update `tests/helpers/resetDb.ts` to clear the new table**
+
+`DustShopPurchase.userId` is a required relation with Prisma's default `Restrict` delete behavior. Once any test creates a purchase row, the next `resetDb()` call would fail on `user.deleteMany()` with a foreign key violation — breaking every test file that runs afterward, not just the dust shop tests. Clear it first, before the `user`/`player` deletes it depends on.
+
+Change `tests/helpers/resetDb.ts` from:
+```typescript
+import { prisma } from '../../src/db/client';
+
+export async function resetDb(): Promise<void> {
+  await prisma.pityCounter.deleteMany();
+  await prisma.userCard.deleteMany();
+  await prisma.currencyTransaction.deleteMany();
+  await prisma.currencyBalance.deleteMany();
+  await prisma.packDropRate.deleteMany();
+  await prisma.packType.deleteMany();
+  await prisma.player.deleteMany();
+  await prisma.user.deleteMany();
+}
+```
+to:
+```typescript
+import { prisma } from '../../src/db/client';
+
+export async function resetDb(): Promise<void> {
+  await prisma.dustShopPurchase.deleteMany();
+  await prisma.pityCounter.deleteMany();
+  await prisma.userCard.deleteMany();
+  await prisma.currencyTransaction.deleteMany();
+  await prisma.currencyBalance.deleteMany();
+  await prisma.packDropRate.deleteMany();
+  await prisma.packType.deleteMany();
+  await prisma.player.deleteMany();
+  await prisma.user.deleteMany();
+}
+```
+
+- [ ] **Step 6: Verify the client compiles**
 
 Run: `npx tsc --noEmit`
-Expected: no errors (the schema change alone doesn't touch any `.ts` files yet, this just confirms the generated client is valid)
+Expected: no errors
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Confirm the existing suite still passes with the updated helper**
+
+Run: `npm test`
+Expected: all existing tests pass unchanged (this step only adds one line to a shared helper; nothing else changed yet)
+
+- [ ] **Step 8: Commit**
 
 ```bash
-git add prisma/schema.prisma prisma/migrations
+git add prisma/schema.prisma prisma/migrations tests/helpers/resetDb.ts
 git commit -m "feat: add DustShopPurchase model with race-safe monthly Gold limit"
 ```
 
@@ -444,9 +486,18 @@ export async function disenchant(
   }
 
   return prisma.$transaction(async (tx) => {
-    const player = await tx.player.findUnique({ where: { id: playerId } });
-    if (!player) throw new CardNotFoundError(playerId);
-    if (!isValidRarity(player.rarity)) throw new InvalidRarityError(player.rarity);
+    // Look up the UserCard (not the Player) first: a Player can exist in the
+    // catalog without this user ever having owned it, and that "never owned"
+    // case must surface as CardNotFoundError, not a false InsufficientDuplicatesError
+    // from the updateMany below matching zero rows for an unrelated reason.
+    const userCard = await tx.userCard.findUnique({
+      where: { userId_playerId: { userId, playerId } },
+      include: { player: true },
+    });
+    if (!userCard) throw new CardNotFoundError(playerId);
+    if (!isValidRarity(userCard.player.rarity)) {
+      throw new InvalidRarityError(userCard.player.rarity);
+    }
 
     const result = await tx.userCard.updateMany({
       where: { userId, playerId, quantity: { gte: quantity + 1 } },
@@ -454,14 +505,14 @@ export async function disenchant(
     });
     if (result.count === 0) {
       throw new InsufficientDuplicatesError(
-        `Not enough duplicate ${player.name} cards to disenchant ${quantity}`,
+        `Not enough duplicate ${userCard.player.name} cards to disenchant ${quantity}`,
       );
     }
 
-    const dustAwarded = DISENCHANT_DUST[player.rarity] * quantity;
-    await creditDust(userId, dustAwarded, `disenchant_${player.rarity}`, tx);
+    const dustAwarded = DISENCHANT_DUST[userCard.player.rarity] * quantity;
+    await creditDust(userId, dustAwarded, `disenchant_${userCard.player.rarity}`, tx);
 
-    return { dustAwarded, rarity: player.rarity };
+    return { dustAwarded, rarity: userCard.player.rarity };
   });
 }
 ```
@@ -558,6 +609,12 @@ describe('cards.service fuse', () => {
   it('throws InsufficientDuplicatesError and leaves cards untouched when surplus is below 10', async () => {
     const silverA = await prisma.player.create({
       data: { name: 'Silver A', team: 'Test FC', position: 'DEF', rarity: 'SILVER' },
+    });
+    // A GOLD player must exist so fuse() reaches the surplus check instead of
+    // failing earlier with NoPlayersForRarityError('GOLD') — this test isolates
+    // the surplus condition specifically.
+    await prisma.player.create({
+      data: { name: 'Gold Target', team: 'Test FC', position: 'FWD', rarity: 'GOLD' },
     });
     await prisma.userCard.create({ data: { userId, playerId: silverA.id, quantity: 5 } }); // surplus 4 only
 
