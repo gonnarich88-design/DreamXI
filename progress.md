@@ -4,13 +4,13 @@
 
 ## ▶️ Resume Here (สำหรับ chat หน้า)
 
-🎉 **Plan 2 (Duplicate Handling) เสร็จสมบูรณ์ — เปิด PR แล้ว, รอ merge** (PR [#2](https://github.com/gonnarich88-design/DreamXI/pull/2), branch `feature/duplicate-handling`)
+🎉 **Plan 2 (Duplicate Handling) เสร็จสมบูรณ์และ merge เข้า `main` แล้ว** (PR [#2](https://github.com/gonnarich88-design/DreamXI/pull/2), merge commit `0e70765`) branch `feature/duplicate-handling` ยังไม่ลบ (เผื่ออ้างอิงย้อนหลัง)
 
 **สรุปสิ่งที่ได้:** Disenchant (`POST /cards/disenchant`), Fusion (`POST /cards/fusion` — pool การ์ดซ้ำคละนักเตะ 10 ใบ/tier, SPECIAL reroll), Dust Shop (`GET /dustshop/catalog`, `POST /dustshop/purchase` — Silver เลือกเองไม่จำกัด, Gold สุ่ม 1 ครั้ง/เดือน บังคับด้วย DB unique constraint ไม่ใช่ check-then-act) ครบทั้ง 8 task ผ่าน implement → task review (spec+quality) ตาม subagent-driven-development ทุก task Approved ไม่มี fix round ที่จำเป็น (มีแค่ implementer self-fix 1 จุดที่ Task 5 จาก plan gap เล็กๆ ซึ่ง reviewer ยืนยันว่าถูกต้องแล้ว) ปิดท้ายด้วย final whole-branch review (Ready to merge: Yes, ไม่มี Critical/Important) full suite 71/71 ผ่าน, `tsc --noEmit` clean
 
 **Follow-up work ที่ถูก triage ไว้จาก Plan 2 (ไม่ใช่ merge blocker):** race window เล็กๆ ระหว่าง `fuse()` กับ `purchaseGold()` บน `UserCard.upsert` เมื่อสุ่มได้นักเตะเดียวกันพร้อมกัน (rare, self-healing, ไม่มีเงิน/การ์ดหาย), `InsufficientDuplicatesError` ใช้ error class เดียวกันทั้งกรณี permanent และ retryable, `purchaseGold` เช็ค insufficient-funds ก่อน monthly-limit (ให้ผลลัพธ์ error code ที่ informative น้อยกว่าถ้าเจอทั้งสองเงื่อนไข), 500 response โชว์ error message ตรงๆ, `cards.service.ts` เริ่มยาว (~158 บรรทัด) — รายละเอียดเต็มใน `.superpowers/sdd/progress.md`
 
-**ขั้นตอนต่อไป (สำหรับ chat หน้า):** merge PR #2 เมื่อพร้อม แล้วเริ่ม **Plan 3 (Purchase Points Lifecycle)** — ยังไม่มี plan doc ต้องเริ่มจาก brainstorming/spec ก่อน — **หมายเหตุ:** Plan 1's follow-up "PP ledger ไม่ balance-reconstructable" ต้องตัดสินใจก่อนเริ่ม Plan 3
+**ขั้นตอนต่อไป (สำหรับ chat หน้า):** เริ่ม **Plan 3 (Purchase Points Lifecycle)** — ยังไม่มี plan doc ต้องเริ่มจาก brainstorming/spec ก่อน — **หมายเหตุ:** Plan 1's follow-up "PP ledger ไม่ balance-reconstructable" ต้องตัดสินใจก่อนเริ่ม Plan 3
 
 **Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range) — หมายเหตุ: ledger นี้อยู่ใน worktree `feature/duplicate-handling` (`.worktrees/duplicate-handling/.superpowers/sdd/progress.md`), ไฟล์นี้เป็น local scratch ไม่ sync กับ main โดยอัตโนมัติ
 
@@ -20,6 +20,7 @@
 - 📄 Plan 1: [`docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md`](docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md)
 - 📄 Design Doc Plan 2: [`docs/superpowers/specs/2026-07-10-duplicate-handling-design.md`](docs/superpowers/specs/2026-07-10-duplicate-handling-design.md)
 - 📄 Plan 2: [`docs/superpowers/plans/2026-07-10-duplicate-handling.md`](docs/superpowers/plans/2026-07-10-duplicate-handling.md)
+- 📄 Card Visual Design Spec (draft, ยังไม่ implement): [`docs/superpowers/specs/2026-07-09-card-visual-design-spec.md`](docs/superpowers/specs/2026-07-09-card-visual-design-spec.md) — ทิศทางภาพการ์ด (ไม่ใช้รูปถ่ายจริง, ทรง "ตั๋วปรุ" แทนโล่ EA FC) ใช้อ้างอิงตอนทำ Plan 5 (Frontend) หรือส่งต่อทีมอาร์ต
 - 🔗 Repo: https://github.com/gonnarich88-design/DreamXI
 
 ---
@@ -36,7 +37,7 @@
 | # | แผน | สถานะ |
 |---|---|---|
 | 1 | Backend Foundation + Pack Opening Engine | 🟢 Done — merged via [#1](https://github.com/gonnarich88-design/DreamXI/pull/1) |
-| 2 | Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) | 🟡 Done — PR [#2](https://github.com/gonnarich88-design/DreamXI/pull/2) open, awaiting merge |
+| 2 | Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) | 🟢 Done — merged via [#2](https://github.com/gonnarich88-design/DreamXI/pull/2) |
 | 3 | Purchase Points Lifecycle (Webhook, Pending→Confirmed, Clawback) | ⚪ Not started |
 | 4 | Level / XP System | ⚪ Not started |
 | 5 | Frontend (Web/PWA/Telegram Mini App) | ⚪ Not started |
