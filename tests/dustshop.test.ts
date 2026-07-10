@@ -1,3 +1,6 @@
+import request from 'supertest';
+import { createApp } from '../src/app';
+import { registerUser, loginUser } from '../src/modules/auth/auth.service';
 import { prisma } from '../src/db/client';
 import { resetDb } from './helpers/resetDb';
 import { creditDust, getOrCreateBalance, InsufficientFundsError } from '../src/modules/currency/currency.service';
@@ -154,5 +157,73 @@ describe('dustshop.service purchase (dispatch)', () => {
 
   it('rejects an unknown itemType with ItemNotAvailableError', async () => {
     await expect(purchase(userId, 'PLATINUM')).rejects.toThrow(ItemNotAvailableError);
+  });
+});
+
+describe('GET /dustshop/catalog and POST /dustshop/purchase', () => {
+  const app = createApp();
+  let token: string;
+  let userId: string;
+
+  beforeEach(async () => {
+    await resetDb();
+    const user = await registerUser('dustshophttp@example.com', 'hunter2pass');
+    userId = user.id;
+    const login = await loginUser('dustshophttp@example.com', 'hunter2pass');
+    token = login.token;
+  });
+
+  it('rejects catalog requests with no auth header', async () => {
+    const res = await request(app).get('/dustshop/catalog');
+    expect(res.status).toBe(401);
+  });
+
+  it('returns the catalog over HTTP', async () => {
+    await prisma.player.create({
+      data: { name: 'HTTP Silver', team: 'Test FC', position: 'DEF', rarity: 'SILVER' },
+    });
+
+    const res = await request(app).get('/dustshop/catalog').set('Authorization', `Bearer ${token}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.silver.players).toHaveLength(1);
+    expect(res.body.special.available).toBe(false);
+  });
+
+  it('purchases a SILVER card over HTTP', async () => {
+    await creditDust(userId, 300, 'test_seed');
+    const player = await prisma.player.create({
+      data: { name: 'HTTP Buyable Silver', team: 'Test FC', position: 'MID', rarity: 'SILVER' },
+    });
+
+    const res = await request(app)
+      .post('/dustshop/purchase')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ itemType: 'SILVER', playerId: player.id });
+
+    expect(res.status).toBe(200);
+    expect(res.body.player.id).toBe(player.id);
+  });
+
+  it('returns 400 when purchasing SPECIAL over HTTP', async () => {
+    const res = await request(app)
+      .post('/dustshop/purchase')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ itemType: 'SPECIAL' });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 402 when dust is insufficient over HTTP', async () => {
+    const player = await prisma.player.create({
+      data: { name: 'HTTP Poor Silver', team: 'Test FC', position: 'GK', rarity: 'SILVER' },
+    });
+
+    const res = await request(app)
+      .post('/dustshop/purchase')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ itemType: 'SILVER', playerId: player.id });
+
+    expect(res.status).toBe(402);
   });
 });
