@@ -1,3 +1,4 @@
+import request from 'supertest';
 import { prisma } from '../src/db/client';
 import { resetDb } from './helpers/resetDb';
 import { getOrCreateBalance } from '../src/modules/currency/currency.service';
@@ -10,6 +11,8 @@ import {
   AllSpecialsOwnedError,
 } from '../src/modules/cards/cards.service';
 import { InvalidRarityError } from '../src/shared/errors';
+import { createApp } from '../src/app';
+import { registerUser, loginUser } from '../src/modules/auth/auth.service';
 
 describe('cards.service disenchant', () => {
   let userId: string;
@@ -199,5 +202,72 @@ describe('cards.service fuse', () => {
       where: { userId_playerId: { userId, playerId: silverA.id } },
     });
     expect(card?.quantity).toBe(1);
+  });
+});
+
+describe('POST /cards/disenchant and /cards/fusion', () => {
+  const app = createApp();
+  let token: string;
+  let userId: string;
+
+  beforeEach(async () => {
+    await resetDb();
+    const user = await registerUser('cardshttp@example.com', 'hunter2pass');
+    userId = user.id;
+    const login = await loginUser('cardshttp@example.com', 'hunter2pass');
+    token = login.token;
+  });
+
+  it('rejects disenchant with no auth header', async () => {
+    const res = await request(app).post('/cards/disenchant').send({ playerId: 'x', quantity: 1 });
+    expect(res.status).toBe(401);
+  });
+
+  it('disenchants a duplicate card over HTTP', async () => {
+    const player = await prisma.player.create({
+      data: { name: 'HTTP Bronze', team: 'Test FC', position: 'MID', rarity: 'BRONZE' },
+    });
+    await prisma.userCard.create({ data: { userId, playerId: player.id, quantity: 2 } });
+
+    const res = await request(app)
+      .post('/cards/disenchant')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ playerId: player.id, quantity: 1 });
+
+    expect(res.status).toBe(200);
+    expect(res.body.dustAwarded).toBe(5);
+  });
+
+  it('returns 400 when disenchant is missing required fields', async () => {
+    const res = await request(app)
+      .post('/cards/disenchant')
+      .set('Authorization', `Bearer ${token}`)
+      .send({});
+    expect(res.status).toBe(400);
+  });
+
+  it('returns 409 when fusion surplus is insufficient over HTTP', async () => {
+    // A GOLD player must exist so fuse() reaches the surplus check instead of
+    // failing earlier with NoPlayersForRarityError('GOLD') — this test isolates
+    // the surplus condition specifically.
+    await prisma.player.create({
+      data: { name: 'HTTP Gold Target', team: 'Test FC', position: 'FWD', rarity: 'GOLD' },
+    });
+
+    const res = await request(app)
+      .post('/cards/fusion')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rarity: 'SILVER' });
+
+    expect(res.status).toBe(409);
+  });
+
+  it('returns 400 for an invalid fusion rarity over HTTP', async () => {
+    const res = await request(app)
+      .post('/cards/fusion')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ rarity: 'PLATINUM' });
+
+    expect(res.status).toBe(400);
   });
 });
