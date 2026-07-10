@@ -1,25 +1,25 @@
 # Dream XI — Progress Tracker
 
-**อัปเดตล่าสุด:** 2026-07-09
+**อัปเดตล่าสุด:** 2026-07-10
 
 ## ▶️ Resume Here (สำหรับ chat หน้า)
 
-กำลังทำ **Plan 1** ด้วย Subagent-Driven Development บน branch `feature/backend-foundation` (แยกจาก `main` แล้ว — ยังไม่ merge)
+🎉 **Plan 2 (Duplicate Handling) เสร็จสมบูรณ์ — เปิด PR แล้ว, รอ merge** (PR [#2](https://github.com/gonnarich88-design/DreamXI/pull/2), branch `feature/duplicate-handling`)
 
-**สถานะตอนหยุด:** 🎉 **Plan 1 ครบทั้ง 9 Task แล้ว** Task 9 (Server Entrypoint) ผ่านรีวิวรอบสุดท้าย — **Approved** หลังเจอปัญหาระหว่างทาง (โค้ดตาม brief เป๊ะๆ รันไม่ผ่านจริงเพราะ `ts-node-dev` ไม่เห็น ambient type augmentation ของ `req.userId` — ต้องเพิ่ม triple-slash reference ใน `server.ts` ถึงจะรันได้ ลองย้ายไปแก้ที่ `tsconfig.json` แล้วแต่ไม่เวิร์กจริงกับ `ts-node-dev` เวอร์ชันนี้ สุดท้ายผู้ใช้ตัดสินใจคงวิธีเดิมไว้พร้อม comment อธิบาย) commit range `6767188..4d4f63e` บันทึกลง ledger แล้ว
+**สรุปสิ่งที่ได้:** Disenchant (`POST /cards/disenchant`), Fusion (`POST /cards/fusion` — pool การ์ดซ้ำคละนักเตะ 10 ใบ/tier, SPECIAL reroll), Dust Shop (`GET /dustshop/catalog`, `POST /dustshop/purchase` — Silver เลือกเองไม่จำกัด, Gold สุ่ม 1 ครั้ง/เดือน บังคับด้วย DB unique constraint ไม่ใช่ check-then-act) ครบทั้ง 8 task ผ่าน implement → task review (spec+quality) ตาม subagent-driven-development ทุก task Approved ไม่มี fix round ที่จำเป็น (มีแค่ implementer self-fix 1 จุดที่ Task 5 จาก plan gap เล็กๆ ซึ่ง reviewer ยืนยันว่าถูกต้องแล้ว) ปิดท้ายด้วย final whole-branch review (Ready to merge: Yes, ไม่มี Critical/Important) full suite 71/71 ผ่าน, `tsc --noEmit` clean
 
-**Final whole-branch review เสร็จแล้ว:** Ready to merge: Yes — ทุก global constraint หลักผ่านหมด (ตรวจซ้ำอิสระโดย reviewer) พบ 1 finding Important: `getOrCreateBalance` มี race เดียวกับที่เคยแก้ใน pity counter (Task 5) → แก้เป็น `upsert` แล้ว (commit `99a3440`) full suite 37/37 + tsc clean Minor findings ที่เหลือทั้งหมดถูก triage เป็น follow-up work ไม่ใช่ merge blocker (รายละเอียดใน `.superpowers/sdd/progress.md`)
+**Follow-up work ที่ถูก triage ไว้จาก Plan 2 (ไม่ใช่ merge blocker):** race window เล็กๆ ระหว่าง `fuse()` กับ `purchaseGold()` บน `UserCard.upsert` เมื่อสุ่มได้นักเตะเดียวกันพร้อมกัน (rare, self-healing, ไม่มีเงิน/การ์ดหาย), `InsufficientDuplicatesError` ใช้ error class เดียวกันทั้งกรณี permanent และ retryable, `purchaseGold` เช็ค insufficient-funds ก่อน monthly-limit (ให้ผลลัพธ์ error code ที่ informative น้อยกว่าถ้าเจอทั้งสองเงื่อนไข), 500 response โชว์ error message ตรงๆ, `cards.service.ts` เริ่มยาว (~158 บรรทัด) — รายละเอียดเต็มใน `.superpowers/sdd/progress.md`
 
-**เสร็จแล้ว:** Push branch ขึ้น origin แล้วสร้าง PR — **https://github.com/gonnarich88-design/DreamXI/pull/1**
+**ขั้นตอนต่อไป (สำหรับ chat หน้า):** merge PR #2 เมื่อพร้อม แล้วเริ่ม **Plan 3 (Purchase Points Lifecycle)** — ยังไม่มี plan doc ต้องเริ่มจาก brainstorming/spec ก่อน — **หมายเหตุ:** Plan 1's follow-up "PP ledger ไม่ balance-reconstructable" ต้องตัดสินใจก่อนเริ่ม Plan 3
 
-**ขั้นตอนต่อไป (สำหรับ chat หน้า):** รอ merge PR #1 (หรือแก้ตาม feedback ถ้ามี) หลัง merge แล้วเริ่ม Plan 2 (Duplicate Handling: Disenchant/Dust, Fusion, Dust Shop) — ยังไม่มี plan doc สำหรับ Plan 2 ต้องเริ่มจาก brainstorming/spec ก่อน
-
-**Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range)
+**Ledger ของ subagent-driven-development:** `.superpowers/sdd/progress.md` (มีรายละเอียดแต่ละ task ที่เสร็จแล้ว + commit range) — หมายเหตุ: ledger นี้อยู่ใน worktree `feature/duplicate-handling` (`.worktrees/duplicate-handling/.superpowers/sdd/progress.md`), ไฟล์นี้เป็น local scratch ไม่ sync กับ main โดยอัตโนมัติ
 
 โปรเจกต์: ระบบเปิดการ์ดนักเตะ Premier League แบบ gacha/pack-opening ผูกกับระบบร้านค้าเดิม (แต้มฟรีทั้งหมด ไม่มีการขายซองด้วยเงินจริงตรงๆ)
 
 - 📄 Design Doc: [`docs/superpowers/specs/2026-07-08-football-card-pack-system-design.md`](docs/superpowers/specs/2026-07-08-football-card-pack-system-design.md)
 - 📄 Plan 1: [`docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md`](docs/superpowers/plans/2026-07-08-backend-foundation-pack-opening.md)
+- 📄 Design Doc Plan 2: [`docs/superpowers/specs/2026-07-10-duplicate-handling-design.md`](docs/superpowers/specs/2026-07-10-duplicate-handling-design.md)
+- 📄 Plan 2: [`docs/superpowers/plans/2026-07-10-duplicate-handling.md`](docs/superpowers/plans/2026-07-10-duplicate-handling.md)
 - 🔗 Repo: https://github.com/gonnarich88-design/DreamXI
 
 ---
@@ -35,8 +35,8 @@
 
 | # | แผน | สถานะ |
 |---|---|---|
-| 1 | Backend Foundation + Pack Opening Engine | 🟡 PR open ([#1](https://github.com/gonnarich88-design/DreamXI/pull/1)) — pending merge |
-| 2 | Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) | ⚪ Not started |
+| 1 | Backend Foundation + Pack Opening Engine | 🟢 Done — merged via [#1](https://github.com/gonnarich88-design/DreamXI/pull/1) |
+| 2 | Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) | 🟡 Done — PR [#2](https://github.com/gonnarich88-design/DreamXI/pull/2) open, awaiting merge |
 | 3 | Purchase Points Lifecycle (Webhook, Pending→Confirmed, Clawback) | ⚪ Not started |
 | 4 | Level / XP System | ⚪ Not started |
 | 5 | Frontend (Web/PWA/Telegram Mini App) | ⚪ Not started |
@@ -57,6 +57,19 @@ Stack: Node.js + TypeScript + Express + PostgreSQL + Prisma
 - [x] Task 7: Pack Opening Orchestration Service
 - [x] Task 8: Pack Opening HTTP Endpoint
 - [x] Task 9: Server Entrypoint
+
+---
+
+## Plan 2: Duplicate Handling (Disenchant/Dust, Fusion, Dust Shop) — Task Checklist
+
+- [x] Task 1: DustShopPurchase schema (race-safe monthly Gold limit via unique constraint)
+- [x] Task 2: Shared errors + rarity constants
+- [x] Task 3: Disenchant service
+- [x] Task 4: Fusion service (pooled duplicates + SPECIAL reroll)
+- [x] Task 5: Cards HTTP routes
+- [x] Task 6: Dust Shop catalog + Silver purchase
+- [x] Task 7: Dust Shop Gold purchase (race-safe)
+- [x] Task 8: Dust Shop HTTP routes
 
 ---
 

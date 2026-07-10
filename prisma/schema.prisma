@@ -13,10 +13,11 @@ model User {
   passwordHash String
   createdAt    DateTime @default(now())
 
-  currencyBalance CurrencyBalance?
-  currencyTxns    CurrencyTransaction[]
-  userCards       UserCard[]
-  pityCounters    PityCounter[]
+  currencyBalance   CurrencyBalance?
+  currencyTxns      CurrencyTransaction[]
+  userCards         UserCard[]
+  pityCounters      PityCounter[]
+  dustShopPurchases DustShopPurchase[]
 }
 
 model CurrencyBalance {
@@ -41,12 +42,13 @@ model CurrencyTransaction {
 }
 
 model Player {
-  id        String     @id @default(uuid())
-  name      String
-  team      String
-  position  String
-  rarity    String
-  userCards UserCard[]
+  id                String             @id @default(uuid())
+  name              String
+  team              String
+  position          String
+  rarity            String
+  userCards         UserCard[]
+  dustShopPurchases DustShopPurchase[]
 }
 
 model UserCard {
@@ -89,4 +91,18 @@ model PityCounter {
   count      Int      @default(0)
 
   @@unique([userId, packTypeId])
+}
+
+model DustShopPurchase {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  itemType     String // "SILVER" | "GOLD"
+  playerId     String?
+  player       Player?  @relation(fields: [playerId], references: [id])
+  dustCost     Int
+  goldMonthKey String? // "YYYY-MM" (UTC), set only when itemType="GOLD", null for SILVER
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, goldMonthKey])
 }

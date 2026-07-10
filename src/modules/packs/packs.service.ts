@@ -3,18 +3,14 @@ import { prisma } from '../../db/client';
 import { pickRarity, DropRateEntry } from './rng';
 import { resolvePityForOpen, recordPackOpen } from './pity.service';
 import { debitLP, debitConfirmedPP } from '../currency/currency.service';
+import { NoPlayersForRarityError } from '../../shared/errors';
+
+export { NoPlayersForRarityError };
 
 export class PackTypeNotFoundError extends Error {
   constructor(name: string) {
     super(`Pack type not found: ${name}`);
     this.name = 'PackTypeNotFoundError';
-  }
-}
-
-export class NoPlayersForRarityError extends Error {
-  constructor(rarity: string) {
-    super(`No players exist for rarity: ${rarity}`);
-    this.name = 'NoPlayersForRarityError';
   }
 }
 
