@@ -117,6 +117,7 @@ export async function confirmPP(
     const current = await getOrCreateBalance(userId, client);
     throw new InsufficientFundsError('PP_PENDING', amount, current.ppPending);
   }
+  await recordTransaction(client, userId, 'PP_PENDING', -amount, reason);
   await recordTransaction(client, userId, 'PP_CONFIRMED', amount, reason);
   return getOrCreateBalance(userId, client);
 }

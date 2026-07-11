@@ -62,6 +62,52 @@ describe('currency.service', () => {
     expect(balance.ppConfirmed).toBe(20);
   });
 
+  it('records a PP_PENDING debit so the ledger can reconstruct ppPending after confirmPP', async () => {
+    await creditPendingPP(userId, 20, 'purchase_completed');
+    await confirmPP(userId, 20, 'return_window_elapsed');
+
+    const pendingTxns = await prisma.currencyTransaction.findMany({
+      where: { userId, currency: 'PP_PENDING' },
+      orderBy: { createdAt: 'asc' },
+    });
+    const reconstructedPending = pendingTxns.reduce((sum, t) => sum + t.amount, 0);
+
+    const balance = await getOrCreateBalance(userId);
+    expect(reconstructedPending).toBe(balance.ppPending);
+    expect(pendingTxns).toHaveLength(2);
+    expect(pendingTxns[1]).toMatchObject({
+      currency: 'PP_PENDING',
+      amount: -20,
+      reason: 'return_window_elapsed',
+    });
+  });
+
+  it('keeps every currency ledger reconstructable to its balance after a mixed sequence of operations', async () => {
+    await creditLP(userId, 100, 'daily_login');
+    await debitLP(userId, 30, 'open_pack');
+    await creditPendingPP(userId, 50, 'purchase_completed');
+    await confirmPP(userId, 20, 'return_window_elapsed');
+    await debitConfirmedPP(userId, 5, 'open_gold_pack');
+    await creditXP(userId, 15, 'daily_login');
+    await creditDust(userId, 40, 'disenchant_bronze');
+    await debitDust(userId, 10, 'dustshop_silver');
+
+    const balance = await getOrCreateBalance(userId);
+    const currencies: Array<[string, number]> = [
+      ['LP', balance.lp],
+      ['PP_PENDING', balance.ppPending],
+      ['PP_CONFIRMED', balance.ppConfirmed],
+      ['XP', balance.xp],
+      ['DUST', balance.dust],
+    ];
+
+    for (const [currency, actual] of currencies) {
+      const txns = await prisma.currencyTransaction.findMany({ where: { userId, currency } });
+      const reconstructed = txns.reduce((sum, t) => sum + t.amount, 0);
+      expect(reconstructed).toBe(actual);
+    }
+  });
+
   it('throws InsufficientFundsError confirming more PP than pending', async () => {
     await creditPendingPP(userId, 5, 'purchase_completed');
     await expect(confirmPP(userId, 10, 'return_window_elapsed')).rejects.toThrow(
